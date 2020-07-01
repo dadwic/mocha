@@ -3,20 +3,20 @@
 const {
   validatePlugin,
   list,
-  loadRootHooks
+  aggregateRootHooks
 } = require('../../../lib/cli/run-helpers');
 
 describe('helpers', function() {
-  describe('loadRootHooks()', function() {
+  describe('aggregateRootHooks()', function() {
     describe('when passed nothing', function() {
       it('should reject', async function() {
-        return expect(loadRootHooks(), 'to be rejected');
+        return expect(aggregateRootHooks(), 'to be rejected');
       });
     });
 
     describe('when passed empty array of hooks', function() {
       it('should return an empty MochaRootHooks object', async function() {
-        return expect(loadRootHooks([]), 'to be fulfilled with', {
+        return expect(aggregateRootHooks([]), 'to be fulfilled with', {
           beforeAll: [],
           beforeEach: [],
           afterAll: [],
@@ -44,7 +44,7 @@ describe('helpers', function() {
           };
         }
         return expect(
-          loadRootHooks([
+          aggregateRootHooks([
             {
               beforeEach: a
             },
