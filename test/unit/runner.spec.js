@@ -21,6 +21,16 @@ var STATE_FAILED = Runnable.constants.STATE_FAILED;
 var STATE_IDLE = Runner.constants.STATE_IDLE;
 var STATE_RUNNING = Runner.constants.STATE_RUNNING;
 var STATE_STOPPED = Runner.constants.STATE_STOPPED;
+const {
+  EVENT_PRE_GLOBAL_SETUP,
+  EVENT_POST_GLOBAL_SETUP,
+  EVENT_PRE_GLOBAL_TEARDOWN,
+  EVENT_POST_GLOBAL_TEARDOWN,
+  EVENT_GLOBAL_SETUP_BEGIN,
+  EVENT_GLOBAL_SETUP_END,
+  EVENT_GLOBAL_TEARDOWN_BEGIN,
+  EVENT_GLOBAL_TEARDOWN_END
+} = Runner.constants;
 
 describe('Runner', function() {
   var suite;
@@ -542,8 +552,119 @@ describe('Runner', function() {
       done();
     });
 
+    describe('global fixtures', function() {
+      beforeEach(function() {
+        sinon.stub(runner, 'runGlobalSetup');
+        sinon.stub(runner, 'runGlobalTeardown');
+      });
+
+      it('it should run global setup', function(done) {
+        runner.run(() => {
+          expect(runner.runGlobalSetup, 'was called once');
+          done();
+        });
+      });
+
+      it('should run global teardown', function(done) {
+        runner.run(() => {
+          expect(runner.runGlobalTeardown, 'was called once');
+          done();
+        });
+      });
+    });
+
     afterEach(function() {
       runner.dispose();
+    });
+  });
+
+  describe('runGlobalSetup()', function() {
+    beforeEach(function() {
+      sinon.stub(runner, 'runGlobalFixtures').resolves();
+    });
+
+    describe('when a fixture is present', function() {
+      beforeEach(function() {
+        runner._opts.globalSetup = sinon.spy();
+      });
+
+      it('should call runGlobalFixtures()', async function() {
+        await runner.runGlobalSetup();
+        expect(runner.runGlobalFixtures, 'to have a call satisfying', [
+          runner._opts.globalSetup,
+          {begin: EVENT_GLOBAL_SETUP_BEGIN, end: EVENT_GLOBAL_SETUP_END}
+        ]);
+      });
+    });
+
+    describe('when a fixture is not present', function() {
+      it('should not call runGlobalFixtures()', async function() {
+        await runner.runGlobalSetup();
+        expect(runner.runGlobalFixtures, 'was not called');
+      });
+    });
+
+    it('should emit EVENT_PRE_GLOBAL_SETUP', async function() {
+      return expect(
+        async () => runner.runGlobalSetup(),
+        'to emit from',
+        runner,
+        EVENT_PRE_GLOBAL_SETUP
+      );
+    });
+
+    it('should emit EVENT_POST_GLOBAL_SETUP', async function() {
+      return expect(
+        async () => runner.runGlobalSetup(),
+        'to emit from',
+        runner,
+        EVENT_POST_GLOBAL_SETUP
+      );
+    });
+  });
+
+  describe('runGlobalTeardown()', function() {
+    beforeEach(function() {
+      sinon.stub(runner, 'runGlobalFixtures').resolves();
+    });
+
+    describe('when a fixture is present', function() {
+      beforeEach(function() {
+        runner._opts.globalTeardown = sinon.spy();
+      });
+
+      it('should call runGlobalFixtures()', async function() {
+        await runner.runGlobalTeardown();
+        expect(runner.runGlobalFixtures, 'to have a call satisfying', [
+          runner._opts.globalTeardown,
+          {begin: EVENT_GLOBAL_TEARDOWN_BEGIN, end: EVENT_GLOBAL_TEARDOWN_END}
+        ]);
+      });
+    });
+
+    describe('when a fixture is not present', function() {
+      it('should not call runGlobalFixtures()', async function() {
+        await runner.runGlobalTeardown();
+        expect(runner.runGlobalFixtures, 'was not called');
+      });
+    });
+
+    it('should emit EVENT_PRE_GLOBAL_TEARDOWN', async function() {
+      return expect(
+        async () => runner.runGlobalTeardown(),
+        'to emit from',
+        runner,
+        EVENT_PRE_GLOBAL_TEARDOWN
+      );
+    });
+
+    it('should emit EVENT_POST_GLOBAL_TEARDOWN', async function() {
+      return expect(
+        async () => runner.runGlobalTeardown(),
+        'to emit from',
+        runner,
+        EVENT_POST_GLOBAL_TEARDOWN
+      );
     });
   });
 

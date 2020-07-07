@@ -54,8 +54,8 @@ describe('worker', function() {
       };
 
       stubs.runHelpers = {
-        handleRequires: sinon.stub(),
-        validatePlugin: sinon.stub(),
+        handleRequires: sinon.stub().resolves({}),
+        validateLegacyPlugin: sinon.stub(),
         loadRootHooks: sinon.stub().resolves()
       };
 
@@ -155,7 +155,7 @@ describe('worker', function() {
             await worker.run('some-file.js', serializeJavascript(argv));
 
             expect(
-              stubs.runHelpers.validatePlugin,
+              stubs.runHelpers.validateLegacyPlugin,
               'to have a call satisfying',
               [argv, 'ui', stubs.Mocha.interfaces]
             ).and('was called once');
@@ -204,7 +204,7 @@ describe('worker', function() {
 
               expect(stubs.runHelpers, 'to satisfy', {
                 handleRequires: expect.it('was called once'),
-                validatePlugin: expect.it('was called once')
+                validateLegacyPlugin: expect.it('was called once')
               });
             });
           });

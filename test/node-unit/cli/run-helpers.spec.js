@@ -1,76 +1,17 @@
 'use strict';
 
 const {
-  validatePlugin,
+  validateLegacyPlugin,
   list,
   aggregateRootHooks
 } = require('../../../lib/cli/run-helpers');
 
 describe('helpers', function() {
-  describe('aggregateRootHooks()', function() {
-    describe('when passed nothing', function() {
-      it('should reject', async function() {
-        return expect(aggregateRootHooks(), 'to be rejected');
-      });
-    });
-
-    describe('when passed empty array of hooks', function() {
-      it('should return an empty MochaRootHooks object', async function() {
-        return expect(aggregateRootHooks([]), 'to be fulfilled with', {
-          beforeAll: [],
-          beforeEach: [],
-          afterAll: [],
-          afterEach: []
-        });
-      });
-    });
-
-    describe('when passed an array containing hook objects and sync functions and async functions', function() {
-      it('should flatten them into a single object', async function() {
-        function a() {}
-        function b() {}
-        function d() {}
-        function g() {}
-        async function f() {}
-        function c() {
-          return {
-            beforeAll: d,
-            beforeEach: g
-          };
-        }
-        async function e() {
-          return {
-            afterEach: f
-          };
-        }
-        return expect(
-          aggregateRootHooks([
-            {
-              beforeEach: a
-            },
-            {
-              afterAll: b
-            },
-            c,
-            e
-          ]),
-          'to be fulfilled with',
-          {
-            beforeAll: [d],
-            beforeEach: [a, g],
-            afterAll: [b],
-            afterEach: [f]
-          }
-        );
-      });
-    });
-  });
-
-  describe('validatePlugin()', function() {
+  describe('validateLegacyPlugin()', function() {
     describe('when used with "reporter" key', function() {
       it('should disallow an array of names', function() {
         expect(
-          () => validatePlugin({reporter: ['bar']}, 'reporter'),
+          () => validateLegacyPlugin({reporter: ['bar']}, 'reporter'),
           'to throw',
           {
             code: 'ERR_MOCHA_INVALID_REPORTER',
@@ -81,7 +22,7 @@ describe('helpers', function() {
 
       it('should fail to recognize an unknown reporter', function() {
         expect(
-          () => validatePlugin({reporter: 'bar'}, 'reporter'),
+          () => validateLegacyPlugin({reporter: 'bar'}, 'reporter'),
           'to throw',
           {code: 'ERR_MOCHA_INVALID_REPORTER', message: /cannot find module/i}
         );
@@ -91,7 +32,7 @@ describe('helpers', function() {
     describe('when used with an "interfaces" key', function() {
       it('should disallow an array of names', function() {
         expect(
-          () => validatePlugin({interface: ['bar']}, 'interface'),
+          () => validateLegacyPlugin({interface: ['bar']}, 'interface'),
           'to throw',
           {
             code: 'ERR_MOCHA_INVALID_INTERFACE',
@@ -102,7 +43,7 @@ describe('helpers', function() {
 
       it('should fail to recognize an unknown interface', function() {
         expect(
-          () => validatePlugin({interface: 'bar'}, 'interface'),
+          () => validateLegacyPlugin({interface: 'bar'}, 'interface'),
           'to throw',
           {code: 'ERR_MOCHA_INVALID_INTERFACE', message: /cannot find module/i}
         );
@@ -112,7 +53,7 @@ describe('helpers', function() {
     describe('when used with an unknown plugin type', function() {
       it('should fail', function() {
         expect(
-          () => validatePlugin({frog: 'bar'}, 'frog'),
+          () => validateLegacyPlugin({frog: 'bar'}, 'frog'),
           'to throw',
           /unknown plugin/i
         );
@@ -123,7 +64,7 @@ describe('helpers', function() {
       it('should fail and report the original error', function() {
         expect(
           () =>
-            validatePlugin(
+            validateLegacyPlugin(
               {
                 reporter: require.resolve('./fixtures/bad-module.fixture.js')
               },
