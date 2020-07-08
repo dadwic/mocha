@@ -1,10 +1,6 @@
 'use strict';
 
-const {
-  validateLegacyPlugin,
-  list,
-  aggregateRootHooks
-} = require('../../../lib/cli/run-helpers');
+const {validateLegacyPlugin, list} = require('../../../lib/cli/run-helpers');
 
 describe('helpers', function() {
   describe('validateLegacyPlugin()', function() {

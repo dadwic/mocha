@@ -578,6 +578,49 @@ describe('Runner', function() {
     });
   });
 
+  describe('runGlobalFixtures()', function() {
+    it('should execute the fixtures in order', async function() {
+      const spies = [sinon.spy(() => 'first'), sinon.spy(() => 'second')];
+      await runner.runGlobalFixtures(
+        {
+          begin: 'begin-event',
+          end: 'end-event'
+        },
+        spies
+      );
+
+      return expect(spies, 'to satisfy', [
+        expect.it('to have a call satisfying', {
+          thisValue: runner._globalContext,
+          returnValue: 'first'
+        }),
+        expect.it('to have a call satisfying', {
+          thisValue: runner._globalContext,
+          returnValue: 'second'
+        })
+      ]);
+    });
+
+    it('should emit the "begin" and "end" events', async function() {
+      const spies = [sinon.spy(() => 'first')];
+      return expect(
+        async () =>
+          runner.runGlobalFixtures(
+            {begin: 'begin-event', end: 'end-event'},
+            spies
+          ),
+        'to emit from',
+        runner,
+        'begin-event',
+        {value: spies[0], context: runner._globalContext}
+      ).and('to emit from', runner, 'end-event', {
+        value: spies[0],
+        context: runner._globalContext,
+        fulfilled: 'first'
+      });
+    });
+  });
+
   describe('runGlobalSetup()', function() {
     beforeEach(function() {
       sinon.stub(runner, 'runGlobalFixtures').resolves();
@@ -585,14 +628,14 @@ describe('Runner', function() {
 
     describe('when a fixture is present', function() {
       beforeEach(function() {
-        runner._opts.globalSetup = sinon.spy();
+        runner._opts.globalSetup = [sinon.spy()];
       });
 
       it('should call runGlobalFixtures()', async function() {
         await runner.runGlobalSetup();
         expect(runner.runGlobalFixtures, 'to have a call satisfying', [
-          runner._opts.globalSetup,
-          {begin: EVENT_GLOBAL_SETUP_BEGIN, end: EVENT_GLOBAL_SETUP_END}
+          {begin: EVENT_GLOBAL_SETUP_BEGIN, end: EVENT_GLOBAL_SETUP_END},
+          runner._opts.globalSetup
         ]);
       });
     });
@@ -630,14 +673,14 @@ describe('Runner', function() {
 
     describe('when a fixture is present', function() {
       beforeEach(function() {
-        runner._opts.globalTeardown = sinon.spy();
+        runner._opts.globalTeardown = [sinon.spy()];
       });
 
       it('should call runGlobalFixtures()', async function() {
         await runner.runGlobalTeardown();
         expect(runner.runGlobalFixtures, 'to have a call satisfying', [
-          runner._opts.globalTeardown,
-          {begin: EVENT_GLOBAL_TEARDOWN_BEGIN, end: EVENT_GLOBAL_TEARDOWN_END}
+          {begin: EVENT_GLOBAL_TEARDOWN_BEGIN, end: EVENT_GLOBAL_TEARDOWN_END},
+          runner._opts.globalTeardown
         ]);
       });
     });

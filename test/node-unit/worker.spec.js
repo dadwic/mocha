@@ -55,15 +55,19 @@ describe('worker', function() {
 
       stubs.runHelpers = {
         handleRequires: sinon.stub().resolves({}),
-        validateLegacyPlugin: sinon.stub(),
-        loadRootHooks: sinon.stub().resolves()
+        validateLegacyPlugin: sinon.stub()
+      };
+
+      stubs.plugin = {
+        aggregateRootHooks: sinon.stub().resolves()
       };
 
       worker = rewiremock.proxy(WORKER_PATH, {
         workerpool: stubs.workerpool,
         '../../lib/mocha': stubs.Mocha,
         '../../lib/nodejs/serializer': stubs.serializer,
-        '../../lib/cli/run-helpers': stubs.runHelpers
+        '../../lib/cli/run-helpers': stubs.runHelpers,
+        '../../lib/plugin': stubs.plugin
       });
     });
 
