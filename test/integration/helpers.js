@@ -1,5 +1,6 @@
 'use strict';
 
+const fs = require('fs-extra');
 var format = require('util').format;
 var spawn = require('cross-spawn').spawn;
 var path = require('path');
@@ -61,10 +62,15 @@ module.exports = {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
   },
 
-  runMocha: runMocha,
-  runMochaJSON: runMochaJSON,
-  runMochaAsync: runMochaAsync,
-  runMochaJSONAsync: runMochaJSONAsync
+  runMocha,
+  runMochaJSON,
+  runMochaAsync,
+  runMochaJSONAsync,
+  runMochaWatch,
+  runMochaWatchJSON,
+  copyFixture,
+  touchFile,
+  replaceFileContents
 };
 
 /**
@@ -412,6 +418,93 @@ function getSummary(res) {
 
     return summary;
   }, res);
+}
+
+/**
+ * Runs the mocha binary in watch mode calls `change` and returns the
+ * raw result.
+ *
+ * The function starts mocha with the given arguments and `--watch` and
+ * waits until the first test run has completed. Then it calls `change`
+ * and waits until the second test run has been completed. Mocha is
+ * killed and the result is returned.
+ *
+ * **Exit code will always be 0**
+ */
+async function runMochaWatch(args, cwd, change) {
+  const [mochaProcess, resultPromise] = invokeMochaAsync([...args, '--watch'], {
+    cwd,
+    stdio: ['pipe', 'pipe', 'inherit']
+  });
+  await sleep(2000);
+  await change(mochaProcess);
+  await sleep(2000);
+  mochaProcess.kill('SIGINT');
+  const res = await resultPromise;
+  // we kill the process with sigint, so it will always appear as "failed" to our
+  // custom assertions (a non-zero exit code 130). just change it to 0.
+  res.code = 0;
+  return res;
+}
+
+/**
+ * Runs the mocha binary in watch mode calls `change` and returns the
+ * JSON reporter output.
+ *
+ * The function starts mocha with the given arguments and `--watch` and
+ * waits until the first test run has completed. Then it calls `change`
+ * and waits until the second test run has been completed. Mocha is
+ * killed and the list of JSON outputs is returned.
+ */
+async function runMochaWatchJSON(args, cwd, change) {
+  const res = await runMochaWatch([...args, '--reporter', 'json'], cwd, change);
+  return (
+    res.output
+      // eslint-disable-next-line no-control-regex
+      .replace(/\u001b\[\?25./g, '')
+      .split('\u001b[2K')
+      .map(x => JSON.parse(x))
+  );
+}
+
+/**
+ * Synchronously touch a file by appending a space to the end. Creates
+ * the file and all its parent directories if necessary.
+ */
+function touchFile(file) {
+  fs.ensureDirSync(path.dirname(file));
+  fs.appendFileSync(file, ' ');
+}
+
+/**
+ * Synchronously replace all substrings matched by `pattern` with
+ * `replacement` in the file’s content.
+ */
+function replaceFileContents(file, pattern, replacement) {
+  const contents = fs.readFileSync(file, 'utf-8');
+  const newContents = contents.replace(pattern, replacement);
+  fs.writeFileSync(file, newContents, 'utf-8');
+}
+
+/**
+ * Synchronously copy a fixture to the given destination file path.
+ * Creates parent directories of the destination path if necessary.
+ */
+function copyFixture(fixtureName, dest) {
+  const fixtureSource = resolveFixturePath(fixtureName);
+  fs.ensureDirSync(path.dirname(dest));
+  fs.copySync(fixtureSource, dest);
+}
+
+/**
+ * Waits for `time` ms.
+ * @param {number} time - Time in ms
+ * @returns {Promise<void>}
+ */
+function sleep(time) {
+  return new Promise(resolve => {
+    setTimeout(resolve, time);
+  });
 }
 
 /**
