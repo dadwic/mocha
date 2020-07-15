@@ -24,7 +24,8 @@ exports.mixinMochaAssertions = function(expect) {
           Object.prototype.toString.call(v) === '[object Object]' &&
           Object.prototype.toString.call(v.stats) === '[object Object]' &&
           Array.isArray(v.failures) &&
-          typeof v.code === 'number'
+          typeof v.code === 'number' &&
+          typeof v.command === 'string'
         );
       }
     })

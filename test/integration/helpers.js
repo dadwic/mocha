@@ -232,10 +232,11 @@ function runMochaJSONAsync(fixturePath, args, opts) {
  * @private
  */
 function toJSONRunResult(result) {
-  var code = result.code;
+  const {code, command, output} = result;
   try {
-    result = JSON.parse(result.output);
+    result = JSON.parse(output);
     result.code = code;
+    result.command = command;
     return result;
   } catch (err) {
     throw new Error(
