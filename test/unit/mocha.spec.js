@@ -722,7 +722,9 @@ describe('Mocha', function() {
             mocha.run();
           } catch (ignored) {
           } finally {
-            expect(runner.run, 'was called once');
+            // this used to get called _once_, but no longer does, because the
+            // call to `Runner#run` executes asynchronously.
+            expect(runner.run, 'was not called');
           }
         });
       });
@@ -925,6 +927,5 @@ describe('Mocha', function() {
         });
       });
     });
-
   });
 });
