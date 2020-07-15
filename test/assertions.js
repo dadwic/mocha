@@ -1,5 +1,7 @@
 'use strict';
 
+const escapeRe = require('escape-string-regexp');
+
 exports.mixinMochaAssertions = function(expect) {
   return expect
     .addType({
@@ -330,6 +332,18 @@ exports.mixinMochaAssertions = function(expect) {
       '<RawResult|RawRunResult> [not] to contain [output] <any>',
       function(expect, result, output) {
         expect(result.output, '[not] to satisfy', output);
+      }
+    )
+    .addAssertion(
+      '<RawResult|RawRunResult> to contain [output] once <any>',
+      function(expect, result, output) {
+        if (typeof output === 'string') {
+          output = escapeRe(output);
+        } else if (!(output instanceof RegExp)) {
+          throw new TypeError('expected a string or regexp');
+        }
+        output = new RegExp(output, 'g');
+        expect(result.output.match(output), 'to have length', 1);
       }
     )
     .addAssertion(
